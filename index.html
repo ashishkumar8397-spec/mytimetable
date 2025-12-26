@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Daily Timetable</title>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --text: #1e293b;
+            --completed: #94a3b8;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            padding: 40px 20px;
+        }
+
+        .container {
+            background: var(--card);
+            padding: 2rem;
+            border-radius: 16px;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 600px;
+        }
+
+        h2 { margin-top: 0; color: var(--primary); text-align: center; }
+
+        .input-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 20px;
+            background: #f1f5f9;
+            padding: 15px;
+            border-radius: 12px;
+        }
+
+        .input-group input[type="text"] { grid-column: span 2; }
+
+        input {
+            padding: 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        button#add-btn {
+            grid-column: span 2;
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th { text-align: left; padding: 12px; border-bottom: 2px solid #f1f5f9; font-size: 13px; color: #64748b; }
+        td { padding: 12px; border-bottom: 1px solid #f1f5f9; transition: all 0.3s; }
+
+        /* Style for Completed Tasks */
+        .completed-row td {
+            color: var(--completed);
+            text-decoration: line-through;
+        }
+
+        .date-badge {
+            background: #e0e7ff;
+            color: #4338ca;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .completed-row .date-badge {
+            background: #f1f5f9;
+            color: #94a3b8;
+        }
+
+        .action-cell {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .delete-link {
+            color: #fca5a5;
+            text-decoration: none;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        .delete-link:hover { color: #ef4444; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>📅 My Timetable</h2>
+    
+    <div class="input-group">
+        <input type="date" id="taskDate">
+        <input type="time" id="taskTime">
+        <input type="text" id="taskName" placeholder="What needs to be done?">
+        <button id="add-btn" onclick="addTask()">Add to Schedule</button>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Status</th>
+                <th>Date</th>
+                <th>Time</th>
+                <th>Task</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody id="timetableBody"></tbody>
+    </table>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('taskDate').valueAsDate = new Date();
+        renderTasks();
+    });
+
+    function addTask() {
+        const dateInput = document.getElementById('taskDate');
+        const timeInput = document.getElementById('taskTime');
+        const nameInput = document.getElementById('taskName');
+
+        if (!dateInput.value || !timeInput.value || !nameInput.value) {
+            alert("Please fill in all fields!");
+            return;
+        }
+
+        const task = {
+            date: dateInput.value,
+            time: timeInput.value,
+            name: nameInput.value,
+            completed: false,
+            id: Date.now()
+        };
+
+        const tasks = getTasks();
+        tasks.push(task);
+        saveAndSort(tasks);
+        
+        nameInput.value = '';
+        renderTasks();
+    }
+
+    function toggleTask(id) {
+        const tasks = getTasks();
+        const task = tasks.find(t => t.id === id);
+        if (task) {
+            task.completed = !task.completed;
+            saveAndSort(tasks);
+            renderTasks();
+        }
+    }
+
+    function deleteTask(id) {
+        let tasks = getTasks();
+        tasks = tasks.filter(t => t.id !== id);
+        localStorage.setItem('myTimetableData', JSON.stringify(tasks));
+        renderTasks();
+    }
+
+    function getTasks() {
+        return JSON.parse(localStorage.getItem('myTimetableData')) || [];
+    }
+
+    function saveAndSort(tasks) {
+        tasks.sort((a, b) => {
+            if (a.date !== b.date) return a.date.localeCompare(b.date);
+            return a.time.localeCompare(b.time);
+        });
+        localStorage.setItem('myTimetableData', JSON.stringify(tasks));
+    }
+
+    function renderTasks() {
+        const tasks = getTasks();
+        const tbody = document.getElementById('timetableBody');
+        tbody.innerHTML = '';
+
+        tasks.forEach(task => {
+            const row = document.createElement('tr');
+            if (task.completed) row.classList.add('completed-row');
+
+            row.innerHTML = `
+                <td>
+                    <input type="checkbox" ${task.completed ? 'checked' : ''} 
+                           onchange="toggleTask(${task.id})">
+                </td>
+                <td><span class="date-badge">${task.date}</span></td>
+                <td><strong>${task.time}</strong></td>
+                <td>${task.name}</td>
+                <td class="action-cell">
+                    <span class="delete-link" onclick="deleteTask(${task.id})">Delete</span>
+                </td>
+            `;
+            tbody.appendChild(row);
+        });
+    }
+</script>
+
+</body>
+</html>
