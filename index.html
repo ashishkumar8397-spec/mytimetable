@@ -3,10 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Timetable Pro 2025-2035</title>
+    <title>Timetable Pro + History</title>
     <style>
         :root {
             --primary: #6366f1;
+            --success: #10b981;
             --bg: #f8fafc;
             --card: #ffffff;
             --text: #1e293b;
@@ -18,7 +19,8 @@
             background-color: var(--bg);
             color: var(--text);
             display: flex;
-            justify-content: center;
+            flex-direction: column;
+            align-items: center;
             padding: 20px;
         }
 
@@ -28,88 +30,68 @@
             border-radius: 16px;
             box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
             width: 100%;
-            max-width: 700px;
+            max-width: 800px;
+            margin-bottom: 30px;
+        }
+
+        h2, h3 { color: var(--primary); text-align: center; margin-top: 0; }
+        h3 { margin-top: 20px; border-top: 2px solid #f1f5f9; padding-top: 20px; color: var(--success); }
+
+        .search-container { margin-bottom: 20px; }
+        #taskSearch {
+            width: 100%; padding: 12px; border: 2px solid var(--primary);
+            border-radius: 8px; font-size: 14px; outline: none;
         }
 
         .calendar-nav {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            background: #f1f5f9;
-            padding: 10px;
-            border-radius: 8px;
-        }
-
-        .calendar-nav select {
-            padding: 5px;
-            border-radius: 4px;
-            border: 1px solid #cbd5e1;
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 20px; background: #f1f5f9; padding: 10px; border-radius: 8px;
         }
 
         .input-group {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-bottom: 20px;
-            padding: 15px;
-            border: 2px solid #f1f5f9;
-            border-radius: 12px;
+            display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+            margin-bottom: 20px; padding: 15px; border: 2px solid #f1f5f9; border-radius: 12px;
         }
 
         .input-group input[type="text"] { grid-column: span 2; }
-
-        input, select {
-            padding: 10px;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-        }
+        input { padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; }
 
         button#add-btn {
-            grid-column: span 2;
-            background: var(--primary);
-            color: white;
-            border: none;
-            padding: 12px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
+            grid-column: span 2; background: var(--primary); color: white;
+            border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: 600;
         }
 
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th { text-align: left; padding: 12px; border-bottom: 2px solid #f1f5f9; font-size: 13px; color: #64748b; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
+        th { text-align: left; padding: 12px; border-bottom: 2px solid #f1f5f9; color: #64748b; }
         td { padding: 12px; border-bottom: 1px solid #f1f5f9; }
 
-        .completed-row td { color: var(--completed); text-decoration: line-through; }
+        .date-badge { background: #e0e7ff; color: #4338ca; padding: 2px 8px; border-radius: 4px; font-weight: bold; font-size: 12px; }
+        .actual-badge { background: #d1fae5; color: #065f46; padding: 2px 8px; border-radius: 4px; font-weight: bold; font-size: 12px; }
         
-        .date-badge {
-            background: #e0e7ff;
-            color: #4338ca;
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 12px;
-            font-weight: bold;
-        }
+        .delete-link { color: #fca5a5; font-size: 12px; cursor: pointer; float: right; }
+        .delete-link:hover { color: #ef4444; }
 
-        .delete-link { color: #fca5a5; font-size: 12px; cursor: pointer; float: right;}
+        .archive-table { background: #fafafa; opacity: 0.8; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>📅 Timetable & Calendar</h2>
+    <h2>📅 10-Year Timetable</h2>
+
+    <div class="search-container">
+        <input type="text" id="taskSearch" placeholder="🔍 Search all tasks..." onkeyup="renderAll()">
+    </div>
 
     <div class="calendar-nav">
         <strong>Jump to Date:</strong>
-        <div>
-            <input type="date" id="calendarJump" min="2025-01-01" max="2035-12-31" onchange="updateSelectedDate(this.value)">
-        </div>
+        <input type="date" id="calendarJump" min="2025-01-01" max="2035-12-31" onchange="document.getElementById('taskDate').value = this.value">
     </div>
     
     <div class="input-group">
         <input type="date" id="taskDate" min="2025-01-01" max="2035-12-31">
         <input type="time" id="taskTime">
-        <input type="text" id="taskName" placeholder="Enter task details...">
+        <input type="text" id="taskName" placeholder="Describe the task...">
         <button id="add-btn" onclick="addTask()">Save Task</button>
     </div>
 
@@ -117,87 +99,109 @@
         <thead>
             <tr>
                 <th>Done</th>
-                <th>Date</th>
+                <th>Expected Date</th>
                 <th>Time</th>
                 <th>Task</th>
             </tr>
         </thead>
-        <tbody id="timetableBody"></tbody>
+        <tbody id="pendingBody"></tbody>
+    </table>
+
+    <h3>✅ Completed Archive</h3>
+    <table class="archive-table">
+        <thead>
+            <tr>
+                <th>Task</th>
+                <th>Expected</th>
+                <th>Actual Completion</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody id="completedBody"></tbody>
     </table>
 </div>
 
 <script>
-    // Initialize
     document.addEventListener('DOMContentLoaded', () => {
         const today = new Date().toISOString().split('T')[0];
-        // Ensure today is within 2025 range for the picker
-        const startDate = "2025-01-01";
-        const initialDate = today < startDate ? startDate : today;
-        
-        document.getElementById('taskDate').value = initialDate;
-        document.getElementById('calendarJump').value = initialDate;
-        renderTasks();
+        document.getElementById('taskDate').value = today;
+        document.getElementById('calendarJump').value = today;
+        renderAll();
     });
-
-    function updateSelectedDate(val) {
-        document.getElementById('taskDate').value = val;
-    }
 
     function addTask() {
         const date = document.getElementById('taskDate').value;
         const time = document.getElementById('taskTime').value;
         const name = document.getElementById('taskName').value;
 
-        if (!date || !time || !name) {
-            alert("Fill all fields!");
-            return;
-        }
+        if (!date || !time || !name) return alert("Fill all fields!");
 
-        const task = { date, time, name, completed: false, id: Date.now() };
-        const tasks = JSON.parse(localStorage.getItem('calendarTasks')) || [];
+        const task = { 
+            date, time, name, 
+            completed: false, 
+            completedDate: null,
+            id: Date.now() 
+        };
+
+        const tasks = getTasks();
         tasks.push(task);
-        
-        tasks.sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time));
-        localStorage.setItem('calendarTasks', JSON.stringify(tasks));
-        
+        saveTasks(tasks);
         document.getElementById('taskName').value = '';
-        renderTasks();
+        renderAll();
     }
 
     function toggleTask(id) {
-        let tasks = JSON.parse(localStorage.getItem('calendarTasks'));
+        const tasks = getTasks();
         const task = tasks.find(t => t.id === id);
-        if (task) task.completed = !task.completed;
-        localStorage.setItem('calendarTasks', JSON.stringify(tasks));
-        renderTasks();
+        if (task) {
+            task.completed = !task.completed;
+            // Record current date if being checked off
+            task.completedDate = task.completed ? new Date().toLocaleDateString() : null;
+            saveTasks(tasks);
+            renderAll();
+        }
     }
 
     function deleteTask(id) {
-        let tasks = JSON.parse(localStorage.getItem('calendarTasks'));
-        tasks = tasks.filter(t => t.id !== id);
-        localStorage.setItem('calendarTasks', JSON.stringify(tasks));
-        renderTasks();
+        saveTasks(getTasks().filter(t => t.id !== id));
+        renderAll();
     }
 
-    function renderTasks() {
-        const tasks = JSON.parse(localStorage.getItem('calendarTasks')) || [];
-        const tbody = document.getElementById('timetableBody');
-        tbody.innerHTML = '';
+    function getTasks() { return JSON.parse(localStorage.getItem('timetable_v4')) || []; }
+    function saveTasks(tasks) {
+        tasks.sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time));
+        localStorage.setItem('timetable_v4', JSON.stringify(tasks));
+    }
 
-        tasks.forEach(task => {
+    function renderAll() {
+        const tasks = getTasks();
+        const search = document.getElementById('taskSearch').value.toLowerCase();
+        const pendingBody = document.getElementById('pendingBody');
+        const completedBody = document.getElementById('completedBody');
+
+        pendingBody.innerHTML = '';
+        completedBody.innerHTML = '';
+
+        tasks.filter(t => t.name.toLowerCase().includes(search)).forEach(task => {
             const row = document.createElement('tr');
-            if (task.completed) row.classList.add('completed-row');
-
-            row.innerHTML = `
-                <td><input type="checkbox" ${task.completed ? 'checked' : ''} onchange="toggleTask(${task.id})"></td>
-                <td><span class="date-badge">${task.date}</span></td>
-                <td><strong>${task.time}</strong></td>
-                <td>
-                    ${task.name}
-                    <span class="delete-link" onclick="deleteTask(${task.id})">Delete</span>
-                </td>
-            `;
-            tbody.appendChild(row);
+            
+            if (!task.completed) {
+                row.innerHTML = `
+                    <td><input type="checkbox" onchange="toggleTask(${task.id})"></td>
+                    <td><span class="date-badge">${task.date}</span></td>
+                    <td><strong>${task.time}</strong></td>
+                    <td>${task.name} <span class="delete-link" onclick="deleteTask(${task.id})">Delete</span></td>
+                `;
+                pendingBody.appendChild(row);
+            } else {
+                row.innerHTML = `
+                    <td><strong>${task.name}</strong></td>
+                    <td><span class="date-badge">${task.date}</span></td>
+                    <td><span class="actual-badge">Done: ${task.completedDate}</span></td>
+                    <td><span class="delete-link" onclick="deleteTask(${task.id})">Remove</span></td>
+                `;
+                completedBody.appendChild(row);
+            }
         });
     }
 </script>
