@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Timetable Pro + History</title>
+    <title>Timetable Pro</title>
     <style>
         :root {
             --primary: #6366f1;
@@ -36,6 +36,29 @@
 
         h2, h3 { color: var(--primary); text-align: center; margin-top: 0; }
         h3 { margin-top: 20px; border-top: 2px solid #f1f5f9; padding-top: 20px; color: var(--success); }
+
+        /* Progress Bar Styles */
+        .progress-container {
+            width: 100%;
+            background-color: #e2e8f0;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            height: 20px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background-color: var(--success);
+            width: 0%;
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+        }
 
         .search-container { margin-bottom: 20px; }
         #taskSearch {
@@ -71,16 +94,20 @@
         .delete-link { color: #fca5a5; font-size: 12px; cursor: pointer; float: right; }
         .delete-link:hover { color: #ef4444; }
 
-        .archive-table { background: #fafafa; opacity: 0.8; }
+        .archive-table { background: #fafafa; opacity: 0.9; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>📅 10-Year Timetable</h2>
+    <h2>📅 Timetable</h2>
+
+    <div class="progress-container">
+        <div id="progressBar" class="progress-bar">0%</div>
+    </div>
 
     <div class="search-container">
-        <input type="text" id="taskSearch" placeholder="🔍 Search all tasks..." onkeyup="renderAll()">
+        <input type="text" id="taskSearch" placeholder="🔍 Search tasks..." onkeyup="renderAll()">
     </div>
 
     <div class="calendar-nav">
@@ -112,7 +139,7 @@
         <thead>
             <tr>
                 <th>Task</th>
-                <th>Expected</th>
+                <th>Expected Date</th>
                 <th>Actual Completion</th>
                 <th></th>
             </tr>
@@ -155,7 +182,6 @@
         const task = tasks.find(t => t.id === id);
         if (task) {
             task.completed = !task.completed;
-            // Record current date if being checked off
             task.completedDate = task.completed ? new Date().toLocaleDateString() : null;
             saveTasks(tasks);
             renderAll();
@@ -167,10 +193,21 @@
         renderAll();
     }
 
-    function getTasks() { return JSON.parse(localStorage.getItem('timetable_v4')) || []; }
+    function getTasks() { return JSON.parse(localStorage.getItem('timetable_v5')) || []; }
+    
     function saveTasks(tasks) {
         tasks.sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time));
-        localStorage.setItem('timetable_v4', JSON.stringify(tasks));
+        localStorage.setItem('timetable_v5', JSON.stringify(tasks));
+    }
+
+    function updateProgressBar(tasks) {
+        const total = tasks.length;
+        const finished = tasks.filter(t => t.completed).length;
+        const percentage = total === 0 ? 0 : Math.round((finished / total) * 100);
+        
+        const bar = document.getElementById('progressBar');
+        bar.style.width = percentage + '%';
+        bar.innerText = percentage + '% Completed';
     }
 
     function renderAll() {
@@ -181,6 +218,8 @@
 
         pendingBody.innerHTML = '';
         completedBody.innerHTML = '';
+
+        updateProgressBar(tasks);
 
         tasks.filter(t => t.name.toLowerCase().includes(search)).forEach(task => {
             const row = document.createElement('tr');
