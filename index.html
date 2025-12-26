@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Daily Timetable</title>
+    <title>Timetable Pro 2025-2035</title>
     <style>
         :root {
             --primary: #6366f1;
@@ -14,12 +14,12 @@
         }
 
         body {
-            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            font-family: 'Inter', system-ui, sans-serif;
             background-color: var(--bg);
             color: var(--text);
             display: flex;
             justify-content: center;
-            padding: 40px 20px;
+            padding: 20px;
         }
 
         .container {
@@ -28,28 +28,41 @@
             border-radius: 16px;
             box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
             width: 100%;
-            max-width: 600px;
+            max-width: 700px;
         }
 
-        h2 { margin-top: 0; color: var(--primary); text-align: center; }
+        .calendar-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            background: #f1f5f9;
+            padding: 10px;
+            border-radius: 8px;
+        }
+
+        .calendar-nav select {
+            padding: 5px;
+            border-radius: 4px;
+            border: 1px solid #cbd5e1;
+        }
 
         .input-group {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 10px;
             margin-bottom: 20px;
-            background: #f1f5f9;
             padding: 15px;
+            border: 2px solid #f1f5f9;
             border-radius: 12px;
         }
 
         .input-group input[type="text"] { grid-column: span 2; }
 
-        input {
-            padding: 12px;
+        input, select {
+            padding: 10px;
             border: 1px solid #e2e8f0;
             border-radius: 8px;
-            font-size: 14px;
         }
 
         button#add-btn {
@@ -63,21 +76,12 @@
             font-weight: 600;
         }
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
         th { text-align: left; padding: 12px; border-bottom: 2px solid #f1f5f9; font-size: 13px; color: #64748b; }
-        td { padding: 12px; border-bottom: 1px solid #f1f5f9; transition: all 0.3s; }
+        td { padding: 12px; border-bottom: 1px solid #f1f5f9; }
 
-        /* Style for Completed Tasks */
-        .completed-row td {
-            color: var(--completed);
-            text-decoration: line-through;
-        }
-
+        .completed-row td { color: var(--completed); text-decoration: line-through; }
+        
         .date-badge {
             background: #e0e7ff;
             color: #4338ca;
@@ -87,52 +91,35 @@
             font-weight: bold;
         }
 
-        .completed-row .date-badge {
-            background: #f1f5f9;
-            color: #94a3b8;
-        }
-
-        .action-cell {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        input[type="checkbox"] {
-            width: 18px;
-            height: 18px;
-            cursor: pointer;
-        }
-
-        .delete-link {
-            color: #fca5a5;
-            text-decoration: none;
-            font-size: 12px;
-            cursor: pointer;
-        }
-        .delete-link:hover { color: #ef4444; }
+        .delete-link { color: #fca5a5; font-size: 12px; cursor: pointer; float: right;}
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>📅 My Timetable</h2>
+    <h2>📅 Timetable & Calendar</h2>
+
+    <div class="calendar-nav">
+        <strong>Jump to Date:</strong>
+        <div>
+            <input type="date" id="calendarJump" min="2025-01-01" max="2035-12-31" onchange="updateSelectedDate(this.value)">
+        </div>
+    </div>
     
     <div class="input-group">
-        <input type="date" id="taskDate">
+        <input type="date" id="taskDate" min="2025-01-01" max="2035-12-31">
         <input type="time" id="taskTime">
-        <input type="text" id="taskName" placeholder="What needs to be done?">
-        <button id="add-btn" onclick="addTask()">Add to Schedule</button>
+        <input type="text" id="taskName" placeholder="Enter task details...">
+        <button id="add-btn" onclick="addTask()">Save Task</button>
     </div>
 
     <table>
         <thead>
             <tr>
-                <th>Status</th>
+                <th>Done</th>
                 <th>Date</th>
                 <th>Time</th>
                 <th>Task</th>
-                <th></th>
             </tr>
         </thead>
         <tbody id="timetableBody"></tbody>
@@ -140,68 +127,60 @@
 </div>
 
 <script>
+    // Initialize
     document.addEventListener('DOMContentLoaded', () => {
-        document.getElementById('taskDate').valueAsDate = new Date();
+        const today = new Date().toISOString().split('T')[0];
+        // Ensure today is within 2025 range for the picker
+        const startDate = "2025-01-01";
+        const initialDate = today < startDate ? startDate : today;
+        
+        document.getElementById('taskDate').value = initialDate;
+        document.getElementById('calendarJump').value = initialDate;
         renderTasks();
     });
 
-    function addTask() {
-        const dateInput = document.getElementById('taskDate');
-        const timeInput = document.getElementById('taskTime');
-        const nameInput = document.getElementById('taskName');
+    function updateSelectedDate(val) {
+        document.getElementById('taskDate').value = val;
+    }
 
-        if (!dateInput.value || !timeInput.value || !nameInput.value) {
-            alert("Please fill in all fields!");
+    function addTask() {
+        const date = document.getElementById('taskDate').value;
+        const time = document.getElementById('taskTime').value;
+        const name = document.getElementById('taskName').value;
+
+        if (!date || !time || !name) {
+            alert("Fill all fields!");
             return;
         }
 
-        const task = {
-            date: dateInput.value,
-            time: timeInput.value,
-            name: nameInput.value,
-            completed: false,
-            id: Date.now()
-        };
-
-        const tasks = getTasks();
+        const task = { date, time, name, completed: false, id: Date.now() };
+        const tasks = JSON.parse(localStorage.getItem('calendarTasks')) || [];
         tasks.push(task);
-        saveAndSort(tasks);
         
-        nameInput.value = '';
+        tasks.sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time));
+        localStorage.setItem('calendarTasks', JSON.stringify(tasks));
+        
+        document.getElementById('taskName').value = '';
         renderTasks();
     }
 
     function toggleTask(id) {
-        const tasks = getTasks();
+        let tasks = JSON.parse(localStorage.getItem('calendarTasks'));
         const task = tasks.find(t => t.id === id);
-        if (task) {
-            task.completed = !task.completed;
-            saveAndSort(tasks);
-            renderTasks();
-        }
-    }
-
-    function deleteTask(id) {
-        let tasks = getTasks();
-        tasks = tasks.filter(t => t.id !== id);
-        localStorage.setItem('myTimetableData', JSON.stringify(tasks));
+        if (task) task.completed = !task.completed;
+        localStorage.setItem('calendarTasks', JSON.stringify(tasks));
         renderTasks();
     }
 
-    function getTasks() {
-        return JSON.parse(localStorage.getItem('myTimetableData')) || [];
-    }
-
-    function saveAndSort(tasks) {
-        tasks.sort((a, b) => {
-            if (a.date !== b.date) return a.date.localeCompare(b.date);
-            return a.time.localeCompare(b.time);
-        });
-        localStorage.setItem('myTimetableData', JSON.stringify(tasks));
+    function deleteTask(id) {
+        let tasks = JSON.parse(localStorage.getItem('calendarTasks'));
+        tasks = tasks.filter(t => t.id !== id);
+        localStorage.setItem('calendarTasks', JSON.stringify(tasks));
+        renderTasks();
     }
 
     function renderTasks() {
-        const tasks = getTasks();
+        const tasks = JSON.parse(localStorage.getItem('calendarTasks')) || [];
         const tbody = document.getElementById('timetableBody');
         tbody.innerHTML = '';
 
@@ -210,14 +189,11 @@
             if (task.completed) row.classList.add('completed-row');
 
             row.innerHTML = `
-                <td>
-                    <input type="checkbox" ${task.completed ? 'checked' : ''} 
-                           onchange="toggleTask(${task.id})">
-                </td>
+                <td><input type="checkbox" ${task.completed ? 'checked' : ''} onchange="toggleTask(${task.id})"></td>
                 <td><span class="date-badge">${task.date}</span></td>
                 <td><strong>${task.time}</strong></td>
-                <td>${task.name}</td>
-                <td class="action-cell">
+                <td>
+                    ${task.name}
                     <span class="delete-link" onclick="deleteTask(${task.id})">Delete</span>
                 </td>
             `;
